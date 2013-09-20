@@ -4,17 +4,28 @@ library(genefilter)
 sourceCpp("C:/Users/Prasad/Documents/Research/tsp/pairMat.cpp")
 sourceCpp("C:/Users/Prasad/Documents/Research/tsp/fstats.cpp")
 
+# Need this for indexing
+create_seq <- function(start,stop){
+	if(start == stop){
+		return(start)
+	} else {
+		return(c(start:stop, create_seq(start+1,stop)))
+	}
+}
+
 newreg <- function(data, outcome, npair=5){
-	m <- dim(data)[1]; ind <- 1:m
+	m <- dim(data)[1]
+#	ind <- 1:m
 	oc <- as.numeric(outcome) # Expect factor, treat as numeric
 	genes <- vector("integer", npair)
 
-	ind1 <- rep(1:m,m); ind2 <- rep(1:m,each=m)
-	index <- paste(rep(ind,m),rep(ind,each=m),sep="<")
-	index <- index[ind1 < ind2] # These are the rownames for pairMat
+#	ind1 <- rep(1:m,m); ind2 <- rep(1:m,each=m)
+#	index <- paste(rep(ind,m),rep(ind,each=m),sep="<")
+#	index <- index[ind1 < ind2] # These are the rownames for pairMat
+	index <- paste(rep(1:(m-1),(m-1):1), create_seq(2,m),sep="<")
 
 	pairMat <- pairMatC(data) # Matrix of pairwise comparisons
-	pmrow <- 1:nrow(pairMat)
+	#pmrow <- 1:nrow(pairMat)
 
 	row_check <- apply(pairMat, 1, sum)# Toss all 0's and all 1's
 	row_check <- which(row_check == 0 | row_check == ncol(pairMat))
@@ -31,19 +42,20 @@ newreg <- function(data, outcome, npair=5){
 	for(i in 2:npair){
 		tmpstats <- fstatsC(pairMat, mod, mod0, oc)
 		idx <- which.max(tmpstats)
-		genes[i] <- pmrow[idx]
+		genes[i] <- idx
+		#genes[i] <- pmrow[idx]
 		mod[,dim(mod)[2]] <- pairMat[idx,]
 		mod0 <- mod
 		mod <- cbind(mod0, rep(0,dim(mod0)[1]))
-		pairMat <- pairMat[-idx,]
-		pmrow <- pmrow[-idx]
+		#pairMat <- pairMat[-idx,]
+		#pmrow <- pmrow[-idx]
 	}
 	
 	index[genes]
 }
 
-#data <- matrix(rnorm(500*20), 500, 20)
-#outcome <- as.factor(sample(c("A","B","C"),20,replace=T))
+data <- matrix(rnorm(500*20), 500, 20)
+outcome <- as.factor(sample(c("A","B","C"),20,replace=T))
 #outcome <- rnorm(20,mean=10,sd=2)
 #tmp <- newreg(data, outcome,npair=10)
 

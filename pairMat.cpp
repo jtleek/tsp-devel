@@ -4,7 +4,7 @@ using namespace Rcpp;
 // [[Rcpp::export]]
 NumericMatrix pairMatC(NumericMatrix dat) {
 	long nrow = dat.nrow(); long ncol = dat.ncol();
-	double newrow = (nrow*(nrow-1))/2; // this is choose(nrow, 2)
+	int newrow = (nrow*(nrow-1))/2; // this is choose(nrow, 2)
 	NumericMatrix out(newrow, ncol);
 	
 	for(long i=0; i < ncol; i++){
